@@ -1,0 +1,10 @@
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/Plugins/netstandard2.0/AAA.LoadingGen.deps.json
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/Plugins/netstandard2.0/AAA.LoadingGen.dll
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/Plugins/netstandard2.0/AAA.LoadingGen.pdb
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.csproj.AssemblyReference.cache
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.GeneratedMSBuildEditorConfig.editorconfig
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.AssemblyInfoInputs.cache
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.AssemblyInfo.cs
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.csproj.CoreCompileInputs.cache
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.dll
+/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen/obj/Debug/netstandard2.0/AAA.LoadingGen.pdb
