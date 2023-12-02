@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using AAA.LoadingGen.Generator.LoadingSequences;
 using AAA.LoadingGen.Generator.LoadingSteps;
@@ -30,6 +31,22 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
             .HandleDiagnostics(context);
         // .Select((x, _) => new LoadingSequenceDataWithDependencies(x, new ImmutableArray<LoadingStepData>()));
 
+
+//         var texts = context.AdditionalTextsProvider;
+//         var paths = texts.Select((x, _)=> x.Path);
+//         var collect = paths.Collect();
+//         context.RegisterSourceOutput(collect, (ctx, c) =>
+//         {
+//             var stringBuilder = new StringBuilder(@"using UnityEngine;
+// //[CreateAssetMenu(menuName = ""LoadingGen/AdditionalTexts"")]
+//     public partial class AdditionalTexts //: ScriptableObject
+// {public int number;}");
+//             foreach (var content in c)
+//             {
+//                 stringBuilder.AppendLine($"//{c}");
+//             }
+//             ctx.AddSource("AdditionalTexts.cs", stringBuilder.ToString());
+//         });
         context.RegisterSourceOutput(loadingSteps, LoadingStepGenerator.GenerateOutput);
         context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
     }

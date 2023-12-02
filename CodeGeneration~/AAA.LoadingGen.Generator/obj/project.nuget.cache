@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "vitTjC4vVFa0+okz3eSzoslUDu5rw71goewPH0ssL9xxZbh5hu22YKb5km1PEVSWifzgi8aU3FX2vYVd2j3aPA==",
+  "dgSpecHash": "3CljT2h/RdAgkcWllJnhKMUOsqtTOQpKOYAWuxN7SSJG5XqEKqZHNvDpxPN1hXPcwhBw3MNnCDE3ShgA3A4Wbg==",
   "success": true,
   "projectFilePath": "/Users/john/Documents/Github/MathGame/Assets/AAA.LoadingGen/CodeGeneration~/AAA.LoadingGen.Generator/AAA.LoadingGen.Generator.csproj",
   "expectedPackageFiles": [
     "/Users/john/.nuget/packages/microsoft.codeanalysis.analyzers/3.3.4/microsoft.codeanalysis.analyzers.3.3.4.nupkg.sha512",
-    "/Users/john/.nuget/packages/microsoft.codeanalysis.common/4.1.0/microsoft.codeanalysis.common.4.1.0.nupkg.sha512",
-    "/Users/john/.nuget/packages/microsoft.codeanalysis.csharp/4.1.0/microsoft.codeanalysis.csharp.4.1.0.nupkg.sha512",
+    "/Users/john/.nuget/packages/microsoft.codeanalysis.common/4.0.1/microsoft.codeanalysis.common.4.0.1.nupkg.sha512",
+    "/Users/john/.nuget/packages/microsoft.codeanalysis.csharp/4.0.1/microsoft.codeanalysis.csharp.4.0.1.nupkg.sha512",
     "/Users/john/.nuget/packages/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "/Users/john/.nuget/packages/netstandard.library/2.0.3/netstandard.library.2.0.3.nupkg.sha512",
     "/Users/john/.nuget/packages/system.buffers/4.5.1/system.buffers.4.5.1.nupkg.sha512",

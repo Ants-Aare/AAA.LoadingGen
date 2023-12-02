@@ -3,9 +3,11 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
+        <PlatformTarget>AnyCPU</PlatformTarget>
         <Nullable>enable</Nullable>
-        <RootNamespace>AAA.LoadingGen</RootNamespace>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <Deterministic>True</Deterministic>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -21,11 +23,12 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0" />
+        <!--        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.1.0"/>-->
+        <PackageReference ExcludeAssets="runtime" Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.1"/>
     </ItemGroup>
-    
+
     <ItemGroup>
-        <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
-        <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+        <AdditionalFiles Include="AnalyzerReleases.Shipped.md"/>
+        <AdditionalFiles Include="AnalyzerReleases.Unshipped.md"/>
     </ItemGroup>
 </Project>

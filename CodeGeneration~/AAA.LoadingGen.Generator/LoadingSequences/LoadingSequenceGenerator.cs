@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using AAA.LoadingGen.Generator;
 using AAA.LoadingGen.Generator.LoadingSequences;
+using AAA.SourceGenerators;
 using Microsoft.CodeAnalysis;
 
 namespace AAA.LoadingGen.LoadingSequences;

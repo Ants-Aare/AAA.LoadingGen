@@ -29,6 +29,7 @@
           }
         },
         "warningProperties": {
+          "allWarningsAsErrors": true,
           "warnAsError": [
             "NU1605"
           ]
@@ -45,8 +46,9 @@
               "version": "[3.3.4, )"
             },
             "Microsoft.CodeAnalysis.CSharp": {
+              "include": "Compile, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "target": "Package",
-              "version": "[4.1.0, )"
+              "version": "[4.0.1, )"
             },
             "NETStandard.Library": {
               "suppressParent": "All",
