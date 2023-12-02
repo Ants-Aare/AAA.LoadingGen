@@ -2,7 +2,8 @@
     "name": "AAA.LoadingGen.Runtime",
     "rootNamespace": "",
     "references": [
-        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:8d6c20a3660284add8285768d0df9195"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

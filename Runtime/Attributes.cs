@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using AAA.Core.Runtime.Enums;
 
 namespace AAA.LoadingGen.Runtime
 {
@@ -36,7 +37,7 @@ namespace AAA.LoadingGen.Runtime
     [AttributeUsage(AttributeTargets.Class)][Conditional("LOADINGGEN_INCLUDE_ATTRIBUTES")]
     public class LoadingSequenceAttribute : Attribute
     {
-        public LoadingSequenceAttribute(LoadingStepsFilter loadingStepsFilter) { }
+        public LoadingSequenceAttribute(Include loadingStepsFilter) { }
     }
 
     [AttributeUsage(AttributeTargets.Class)][Conditional("LOADINGGEN_INCLUDE_ATTRIBUTES")]

@@ -7,4 +7,8 @@ namespace AAA.LoadingGen.Runtime
     {
         public UniTask LoadAsync(CancellationToken cancellationToken);
     }
+    public interface ILoadingStep
+    {
+        public void Load();
+    }
 }
