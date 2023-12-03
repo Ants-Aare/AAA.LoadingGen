@@ -1,17 +1,19 @@
 using System;
-using System.Linq;
 using System.Text;
 using AAA.LoadingGen.Generator;
 using AAA.SourceGenerators;
+using AAA.SourceGenerators.Common;
 using Microsoft.CodeAnalysis;
 
 namespace AAA.LoadingGen.LoadingSteps;
 
 public class LoadingStepGenerator
 {
+    public static readonly string GeneratorName = typeof(LoadingStepGenerator).FullName!;
+
     public static void GenerateOutput(SourceProductionContext sourceProductionContext, LoadingStepData loadingStepData)
     {
-        var stringBuilder = new StringBuilder(GenerationStringsUtility.GenerationWarning);
+        var stringBuilder = new StringBuilder().AppendGenerationWarning(GeneratorName, loadingStepData.Name);
 
         stringBuilder.Append($"\n/*\n{loadingStepData.ToString()}\n*/");
 

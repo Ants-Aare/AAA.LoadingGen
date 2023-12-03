@@ -1,12 +1,11 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using AAA.LoadingGen.Generator.LoadingSequences;
 using AAA.LoadingGen.Generator.LoadingSteps;
 using AAA.LoadingGen.LoadingSequences;
 using AAA.LoadingGen.LoadingSteps;
+using AAA.SourceGenerators.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -24,7 +23,7 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
         var loadingSequences = context.SyntaxProvider
             .CreateSyntaxProvider(LoadingSequenceProvider.Filter, LoadingSequenceProvider.Transform)
             .HandleDiagnostics(context);
-        
+
         var loadingSequencesWithDependencies = loadingSequences
             .Combine(loadingSteps.Collect())
             .Select(LoadingSequenceProvider.FilterDependencies)

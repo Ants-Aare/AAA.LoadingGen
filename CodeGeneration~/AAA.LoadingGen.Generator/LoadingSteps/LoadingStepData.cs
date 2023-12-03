@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static AAA.SourceGenerators.Common.CommonDiagnostics;
 
 namespace AAA.LoadingGen.Generator;
 
@@ -54,7 +55,7 @@ public struct LoadingStepData : IEquatable<LoadingStepData>
         var targetLoadingType = attributeData.ConstructorArguments.FirstOrDefault().Value;
         if (targetLoadingType == null)
         {
-            diagnostic = Diagnostic.Create(LoadingGenDiagnostics.IncorrectAttributeData, Location.None, "LoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
+            diagnostic = Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "LoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
             return false;
         }
 

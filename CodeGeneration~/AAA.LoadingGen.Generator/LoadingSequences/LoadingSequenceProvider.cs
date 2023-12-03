@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
+using AAA.SourceGenerators.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -25,7 +26,7 @@ public class LoadingSequenceProvider
         var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
 
         if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
-            return Diagnostic.Create(LoadingGenDiagnostics.NamedTypeSymbolNotFound, Location.None, classDeclarationSyntax.Identifier.Text);
+            return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
 
         var attributeDatas = namedTypeSymbol.GetAttributes();
 
@@ -47,10 +48,10 @@ public class LoadingSequenceProvider
         (LoadingSequenceData loadingSequenceData, ImmutableArray<LoadingStepData> loadingStepDatas) data,
         CancellationToken cancellationToken)
     {
-        var filteredLoadingStepDatas = data.loadingSequenceData.LoadingStepsFilter switch
+        var filteredLoadingStepDatas = data.loadingSequenceData.Include switch
         {
-            LoadingStepsFilter.None => new HashSet<LoadingStepData>(),
-            LoadingStepsFilter.All => new HashSet<LoadingStepData>(data.loadingStepDatas.Where(x => !x.ExcludedByDefault)),
+            Include.None => new HashSet<LoadingStepData>(),
+            Include.All => new HashSet<LoadingStepData>(data.loadingStepDatas.Where(x => !x.ExcludedByDefault)),
             _ => throw new ArgumentOutOfRangeException()
         };
 

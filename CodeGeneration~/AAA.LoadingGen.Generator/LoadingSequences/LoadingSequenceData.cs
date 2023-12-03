@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static AAA.SourceGenerators.Common.CommonDiagnostics;
 
 namespace AAA.LoadingGen.Generator;
 
@@ -11,7 +12,7 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>
 {
     public string Name;
     public string? TargetNamespace;
-    public LoadingStepsFilter LoadingStepsFilter;
+    public Include Include;
     public ImmutableArray<string>? ExcludedSteps;
     public ImmutableArray<string>? ExcludedFeatures;
     public ImmutableArray<(string, string)>? SubstitutedSteps;
@@ -23,22 +24,22 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>
         TargetNamespace = targetNamespace;
     }
 
-    public LoadingSequenceData(string name, string targetNamespace, LoadingStepsFilter loadingStepsFilter, ImmutableArray<string>? excludedSteps,
-        ImmutableArray<string>? excludedFeatures,
-        ImmutableArray<(string, string)>? substitutedSteps, List<string> additionalData)
-    {
-        Name = name;
-        TargetNamespace = targetNamespace;
-        LoadingStepsFilter = loadingStepsFilter;
-        ExcludedSteps = excludedSteps;
-        ExcludedFeatures = excludedFeatures;
-        SubstitutedSteps = substitutedSteps;
-        AdditionalData = additionalData;
-    }
+    // public LoadingSequenceData(string name, string targetNamespace, LoadingStepsFilter loadingStepsFilter, ImmutableArray<string>? excludedSteps,
+    //     ImmutableArray<string>? excludedFeatures,
+    //     ImmutableArray<(string, string)>? substitutedSteps, List<string> additionalData)
+    // {
+    //     Name = name;
+    //     TargetNamespace = targetNamespace;
+    //     LoadingStepsFilter = loadingStepsFilter;
+    //     ExcludedSteps = excludedSteps;
+    //     ExcludedFeatures = excludedFeatures;
+    //     SubstitutedSteps = substitutedSteps;
+    //     AdditionalData = additionalData;
+    // }
 
     public bool Equals(LoadingSequenceData other)
     {
-        return Name == other.Name && TargetNamespace == other.TargetNamespace && LoadingStepsFilter == other.LoadingStepsFilter &&
+        return Name == other.Name && TargetNamespace == other.TargetNamespace && Include == other.Include &&
                Nullable.Equals(ExcludedSteps, other.ExcludedSteps) && Nullable.Equals(ExcludedFeatures, other.ExcludedFeatures) &&
                Nullable.Equals(SubstitutedSteps, other.SubstitutedSteps);
     }
@@ -54,7 +55,7 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>
         {
             var hashCode = Name.GetHashCode();
             hashCode = (hashCode * 397) ^ (TargetNamespace != null ? TargetNamespace.GetHashCode() : 0);
-            hashCode = (hashCode * 397) ^ (int)LoadingStepsFilter;
+            hashCode = (hashCode * 397) ^ (int)Include;
             hashCode = (hashCode * 397) ^ ExcludedSteps.GetHashCode();
             hashCode = (hashCode * 397) ^ ExcludedFeatures.GetHashCode();
             hashCode = (hashCode * 397) ^ SubstitutedSteps.GetHashCode();
@@ -64,7 +65,7 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>
 
     public override string ToString()
     {
-        return $@"LoadingStepsFilter: {LoadingStepsFilter}
+        return $@"LoadingSteps Include: {Include}
 {ExcludedSteps?.Aggregate("\nExcluded Steps:", (s, s1) => $"{s}\n    {s1}")}
 {ExcludedFeatures?.Aggregate("\nExcluded Features:", (s, s1) => $"{s}\n    {s1}")}
 {SubstitutedSteps?.Aggregate("\nSubstituted Steps:", (s, s1) => $"{s}\n    ({s1.Item1}, {s1.Item2})")}
@@ -92,11 +93,11 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>
 
             if (targetLoadingStepsFilter == null)
             {
-                diagnostic = Diagnostic.Create(LoadingGenDiagnostics.IncorrectAttributeData, Location.None, "LoadingSequenceAttribute", classDeclarationSyntax.Identifier.Text);
+                diagnostic = Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "LoadingSequenceAttribute", classDeclarationSyntax.Identifier.Text);
                 return false;
             }
 
-            LoadingStepsFilter = (LoadingStepsFilter)targetLoadingStepsFilter;
+            Include = (Include)targetLoadingStepsFilter;
             return true;
         }
         catch (Exception e)
@@ -133,7 +134,7 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>
 
         if (targetTypesArguments.Any(x => x.Value is null) || replacementTypesArguments.Any(x => x.Value is null))
         {
-            diagnostic = Diagnostic.Create(LoadingGenDiagnostics.IncorrectAttributeData, Location.None, "SubstituteLoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
+            diagnostic = Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "SubstituteLoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
             return false;
         }
 

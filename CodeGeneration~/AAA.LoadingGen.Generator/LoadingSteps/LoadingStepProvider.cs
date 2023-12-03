@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using AAA.SourceGenerators.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -23,20 +24,15 @@ public class LoadingStepProvider
         var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
         try
         {
-            if (!classDeclarationSyntax.Modifiers.Any(SyntaxKind.PartialKeyword))
-                return Diagnostic.Create(LoadingGenDiagnostics.ClassNotPartial, Location.None, classDeclarationSyntax.Identifier);
+            if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
+                return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier);
 
-            var symbol = ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken);
-
-            if (symbol is null)
-                return Diagnostic.Create(LoadingGenDiagnostics.NamedTypeSymbolNotFound, Location.None, classDeclarationSyntax.Identifier);
-
-            var attributeDatas = symbol.GetAttributes();
+            var attributeDatas = namedTypeSymbol.GetAttributes();
 
             var className = classDeclarationSyntax.Identifier.Text;
-            var targetNamespace = symbol.ContainingNamespace.IsGlobalNamespace
+            var targetNamespace = namedTypeSymbol.ContainingNamespace.IsGlobalNamespace
                 ? null
-                : symbol.ContainingNamespace.ToDisplayString();
+                : namedTypeSymbol.ContainingNamespace.ToDisplayString();
 
             var loadingStepData = new LoadingStepData(className, targetNamespace);
 
@@ -51,7 +47,7 @@ public class LoadingStepProvider
         }
         catch (Exception e)
         {
-            return Diagnostic.Create(LoadingGenDiagnostics.ExceptionOccured, Location.None, nameof(Transform) + classDeclarationSyntax.Identifier.Text, e.ToString());
+            return Diagnostic.Create(CommonDiagnostics.ExceptionOccured, classDeclarationSyntax.GetLocation(), nameof(Transform) + classDeclarationSyntax.Identifier.Text, e.ToString());
         }
     }
 }

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
-namespace AAA.LoadingGen.Generator;
+namespace AAA.SourceGenerators.Common;
 
 public readonly struct ResultOrDiagnostics<T> : IEquatable<ResultOrDiagnostics<T>>
 {

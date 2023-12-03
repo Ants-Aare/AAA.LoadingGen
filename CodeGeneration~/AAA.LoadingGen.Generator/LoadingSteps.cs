@@ -1,7 +1,7 @@
 namespace AAA.LoadingGen.Generator;
 
-public enum LoadingStepsFilter
+public enum Include
 {
-    All,
-    None
+    None = 0,
+    All = 1,
 }
