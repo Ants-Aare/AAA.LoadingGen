@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace AAA.SourceGenerators.Common;
@@ -16,6 +17,21 @@ public static class StringBuildersUtility
 
         builder.AppendLine("// </auto-generated>\n");
         return builder;
+    }
+
+    public static StringBuilder AppendMethodSignature(this StringBuilder stringBuilder, IEnumerator<(string type, string argName)> arguments)
+    {
+        
+        stringBuilder.Append('(');
+        arguments.MoveNext();
+        stringBuilder.Append(arguments.Current.type).Append(' ').Append(arguments.Current.argName);
+        while (arguments.MoveNext())
+        {
+            stringBuilder.Append(',').Append(arguments.Current.type).Append(' ').Append(arguments.Current.argName);
+        }
+        
+        stringBuilder.Append(')');
+        return stringBuilder;
     }
 }
 

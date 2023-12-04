@@ -2,41 +2,33 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using AAA.SourceGenerators.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static AAA.SourceGenerators.Common.CommonDiagnostics;
 
 namespace AAA.LoadingGen.Generator;
 
-public struct LoadingStepData : IEquatable<LoadingStepData>
+public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver, ITypeResolver
 {
-    public string Name;
+    public string Name = string.Empty;
+    public string NameCamelCase = string.Empty;
     public string? TargetNamespace;
-    public LoadingType LoadingType;
-    public bool ExcludedByDefault;
+    public LoadingType LoadingType = LoadingType.Synchronous;
+    public bool ExcludedByDefault = false;
     public ImmutableArray<string>? FeatureTags;
     public ImmutableArray<string>? Dependencies;
-    public List<string> AdditionalData = new();
+    public readonly List<string> AdditionalData = new();
+    public bool IsConstructable;
 
-    public LoadingStepData(string name, string? targetNamespace, LoadingType loadingType, ImmutableArray<string>? featureTags, ImmutableArray<string>? dependencies,
-        List<string> additionalData,
-        bool excludedByDefault)
+    public LoadingStepData() { }
+
+    public void ResolveType(string name, string? namespaceName)
     {
         Name = name;
-        TargetNamespace = targetNamespace;
-        LoadingType = loadingType;
-        FeatureTags = featureTags;
-        Dependencies = dependencies;
-        AdditionalData = additionalData;
-        ExcludedByDefault = excludedByDefault;
+        NameCamelCase = name.FirstCharToLower();
+        TargetNamespace = namespaceName;
     }
-
-    public LoadingStepData(string className, string? targetNamespace)
-    {
-        Name = className;
-        TargetNamespace = targetNamespace;
-    }
-
     public bool TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData, out Diagnostic? diagnostic)
     {
         diagnostic = null;

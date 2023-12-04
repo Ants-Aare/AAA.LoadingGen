@@ -8,6 +8,7 @@
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <Deterministic>True</Deterministic>
+        <IsRoslynComponent>true</IsRoslynComponent>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">

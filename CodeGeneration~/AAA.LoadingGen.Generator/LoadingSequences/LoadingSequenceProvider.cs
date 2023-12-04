@@ -21,29 +21,6 @@ public class LoadingSequenceProvider
                    .Any(x => x is { Name: IdentifierNameSyntax { Identifier.Text: "LoadingSequence" } });
     }
 
-    public static ResultOrDiagnostics<LoadingSequenceData> Transform(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-    {
-        var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
-
-        if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
-            return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
-
-        var attributeDatas = namedTypeSymbol.GetAttributes();
-
-        var className = classDeclarationSyntax.Identifier.Text;
-        var targetNamespace = namedTypeSymbol.ContainingNamespace.ToDisplayString();
-
-        var loadingSequenceData = new LoadingSequenceData(className, targetNamespace);
-        foreach (var attributeData in attributeDatas)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!loadingSequenceData.TryResolveAttribute(classDeclarationSyntax, attributeData, out var diagnostic) && diagnostic != null)
-                return diagnostic;
-        }
-
-        return loadingSequenceData;
-    }
-
     public static ResultOrDiagnostics<LoadingSequenceDataWithDependencies> FilterDependencies(
         (LoadingSequenceData loadingSequenceData, ImmutableArray<LoadingStepData> loadingStepDatas) data,
         CancellationToken cancellationToken)

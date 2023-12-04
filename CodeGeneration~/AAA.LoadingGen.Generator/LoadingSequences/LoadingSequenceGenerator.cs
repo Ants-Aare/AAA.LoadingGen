@@ -15,33 +15,57 @@ public class LoadingSequenceGenerator
 
     public static void GenerateOutput(SourceProductionContext context, LoadingSequenceDataWithDependencies loadingSequenceDataWithDependencies)
     {
-        var loadingSequenceData = loadingSequenceDataWithDependencies.LoadingSequenceData;
+        var sequenceData = loadingSequenceDataWithDependencies.LoadingSequenceData;
+        var stepDatas = loadingSequenceDataWithDependencies.LoadingSteps;
 
-        var stringBuilder = new StringBuilder().AppendGenerationWarning(GeneratorName, loadingSequenceData.Name);
+        var stringBuilder = new StringBuilder().AppendGenerationWarning(GeneratorName, sequenceData.Name);
         stringBuilder.Append($"\n/*\n{loadingSequenceDataWithDependencies.ToString()}*/\n");
 
         stringBuilder.AppendLine(GenerationStringsUtility.Usings);
 
-        using (new NamespaceBuilder(stringBuilder, loadingSequenceData.TargetNamespace))
+        using (new NamespaceBuilder(stringBuilder, sequenceData.TargetNamespace))
         {
-            stringBuilder.AppendLine($"    public partial class {loadingSequenceData.Name}");
+            stringBuilder.AppendLine($"    public partial class {sequenceData.Name}");
 
             using (new BracketsBuilder(stringBuilder, 1))
             {
-                stringBuilder.AppendLine("        public void StartLoadingSequence(Action onCompleted = null)");
+                foreach (var stepData in stepDatas)
+                    stringBuilder.AppendLine($"        readonly {stepData.Name} {stepData.NameCamelCase};");
+                
+                stringBuilder.AppendLine($"        public {sequenceData.Name}");
+                stringBuilder.AppendMethodSignature(stepDatas.Where(x => !x.IsConstructable).Select<LoadingStepData, (string, string)>(x => new(x.Name, x.NameCamelCase))
+                    .GetEnumerator());
+
                 using (new BracketsBuilder(stringBuilder, 2))
                 {
-                    foreach (var stepData in loadingSequenceDataWithDependencies.LoadingSteps)
+                    foreach (var stepData in stepDatas)
+                    {
+                        if(stepData.IsConstructable)
+                            stringBuilder.AppendLine($"            {stepData.NameCamelCase} = new {stepData.Name}();");
+                        else
+                            stringBuilder.AppendLine($"            this.{stepData.NameCamelCase} = {stepData.NameCamelCase};");
+                    }
+                }
+                
+                stringBuilder.AppendLine("        public async UniTask StartLoadingSequenceAsync(CancellationToken ct)");
+                using (new BracketsBuilder(stringBuilder, 2))
+                {
+                    foreach (var stepData in stepDatas)
                     {
                         if (stepData.LoadingType == LoadingType.Asynchronous)
                         {
-                            stringBuilder.AppendLine()
+                            stringBuilder.AppendLine($"            await {stepData.Name}.StartLoadingStepAsync(ct);");
+                        }
+                        else
+                        {
+                            stringBuilder.AppendLine($"            {stepData.Name}.StartLoadingStep();");
+
                         }
                     }
                 }
             }
         }
 
-        context.AddSource($"{loadingSequenceData.Name}.Generated.cs", stringBuilder.ToString());
+        context.AddSource($"{sequenceData.Name}.Generated.cs", stringBuilder.ToString());
     }
 }

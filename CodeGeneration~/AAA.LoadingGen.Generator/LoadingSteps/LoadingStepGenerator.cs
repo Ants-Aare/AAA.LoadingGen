@@ -11,7 +11,7 @@ public class LoadingStepGenerator
 {
     public static readonly string GeneratorName = typeof(LoadingStepGenerator).FullName!;
 
-    public static void GenerateOutput(SourceProductionContext sourceProductionContext, LoadingStepData loadingStepData)
+    public static void GenerateOutput(SourceProductionContext context, LoadingStepData loadingStepData)
     {
         var stringBuilder = new StringBuilder().AppendGenerationWarning(GeneratorName, loadingStepData.Name);
 
@@ -35,7 +35,7 @@ public class LoadingStepGenerator
                         stringBuilder.AppendLine("        public void StartLoadingStep()");
                         using (new BracketsBuilder(stringBuilder, 2))
                         {
-                            stringBuilder.AppendLine("        public void StartLoadingStep()");
+                            stringBuilder.AppendLine("            Load();");
                         }
 
                         break;
@@ -62,6 +62,6 @@ public class LoadingStepGenerator
         }
 
 
-        sourceProductionContext.AddSource($"{loadingStepData.Name}.Generated.cs", stringBuilder.ToString());
+        context.AddSource($"{loadingStepData.Name}.Generated.cs", stringBuilder.ToString());
     }
 }

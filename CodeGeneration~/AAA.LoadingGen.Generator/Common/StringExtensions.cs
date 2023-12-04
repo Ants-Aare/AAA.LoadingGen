@@ -8,6 +8,8 @@ public static class StringExtensions
 {
     public static string FirstCharToUpper(this string input)
         => input[0].ToString().ToUpper() + input.Substring(1);
+    public static string FirstCharToLower(this string input)
+        => input[0].ToString().ToLower() + input.Substring(1);
 
     public static string CamelCaseToSpaced(this string input)
         => Regex.Replace(input, "([a-z](?=[A-Z])|[A-Z](?=[A-Z][a-z]))", "$1 ");
@@ -45,4 +47,5 @@ public static class StringExtensions
             return hash1 + (hash2 * 1566083941);
         }
     }
+    
 }

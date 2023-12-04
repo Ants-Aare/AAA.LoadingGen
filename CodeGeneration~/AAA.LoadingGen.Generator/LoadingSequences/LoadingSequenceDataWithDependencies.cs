@@ -6,11 +6,24 @@ namespace AAA.LoadingGen.Generator.LoadingSequences;
 
 public readonly struct LoadingSequenceDataWithDependencies : IEquatable<LoadingSequenceDataWithDependencies>
 {
+    public readonly LoadingSequenceData LoadingSequenceData;
+    public readonly ImmutableArray<LoadingStepData> LoadingSteps;
+
+    public LoadingSequenceDataWithDependencies(LoadingSequenceData loadingSequenceData, ImmutableArray<LoadingStepData> loadingSteps)
+    {
+        LoadingSequenceData = loadingSequenceData;
+        LoadingSteps = loadingSteps;
+    }
+
     public bool Equals(LoadingSequenceDataWithDependencies other)
-        => LoadingSequenceData.Equals(other.LoadingSequenceData) && LoadingSteps.Equals(other.LoadingSteps);
+    {
+        return LoadingSequenceData.Equals(other.LoadingSequenceData) && LoadingSteps.Equals(other.LoadingSteps);
+    }
 
     public override bool Equals(object? obj)
-        => obj is LoadingSequenceDataWithDependencies other && Equals(other);
+    {
+        return obj is LoadingSequenceDataWithDependencies other && Equals(other);
+    }
 
     public override int GetHashCode()
     {
@@ -24,14 +37,5 @@ public readonly struct LoadingSequenceDataWithDependencies : IEquatable<LoadingS
     {
         return @$"{LoadingSequenceData.ToString()}
 {LoadingSteps.Aggregate("LoadingSteps:\n", (s, data) => $"{s}\n{data.Name}\n")}";
-    }
-
-    public readonly LoadingSequenceData LoadingSequenceData;
-    public readonly ImmutableArray<LoadingStepData> LoadingSteps;
-
-    public LoadingSequenceDataWithDependencies(LoadingSequenceData loadingSequenceData, ImmutableArray<LoadingStepData> loadingSteps)
-    {
-        LoadingSequenceData = loadingSequenceData;
-        LoadingSteps = loadingSteps;
     }
 }

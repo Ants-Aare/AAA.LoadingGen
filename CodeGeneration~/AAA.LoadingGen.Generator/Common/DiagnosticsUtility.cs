@@ -36,3 +36,4 @@ public static class DiagnosticsUtility
         context.AddSource($"Diagnostics.g.cs", stringBuilder.ToString());
     }
 }
+
