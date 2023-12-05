@@ -17,20 +17,27 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        var optionsProvider = context.AnalyzerConfigOptionsProvider;
+
         var loadingSteps = context.SyntaxProvider
-            .CreateSyntaxProvider(LoadingStepProvider.Filter, CommonTransforms.TransformAttributeCtorResolved<LoadingStepData>)
+            .CreateSyntaxProvider(LoadingStepProvider.Filter, CommonTransforms.TransformResolved<LoadingStepData>)
             .HandleDiagnostics(context);
 
-        var loadingSequences = context.SyntaxProvider
-            .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformAttributeResolved<LoadingSequenceData>)
-            .HandleDiagnostics(context);
+        // var loadingSequences = context.SyntaxProvider
+        //     .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformResolved<LoadingSequenceData>)
+        //     .HandleDiagnostics(context);
 
-        var loadingSequencesWithDependencies = loadingSequences
-            .Combine(loadingSteps.Collect())
-            .Select(LoadingSequenceProvider.FilterDependencies)
-            .HandleDiagnostics(context);
+        // var loadingStepsInCompilation =
+        //     context.CompilationProvider
+        //         .Select(static (c, ct) => CommonTransforms.TransformResolved<LoadingStepData>(c, ct, LoadingStepProvider.Filter))
+        //         .HandleDiagnostics(context);
+
+        // var loadingSequencesWithDependencies = loadingSequences
+        //     .Combine(loadingSteps.Collect())
+        //     .Select(LoadingSequenceProvider.FilterDependencies)
+        //     .HandleDiagnostics(context);
 
         context.RegisterSourceOutput(loadingSteps, LoadingStepGenerator.GenerateOutput);
-        context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
+        // context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
     }
 }

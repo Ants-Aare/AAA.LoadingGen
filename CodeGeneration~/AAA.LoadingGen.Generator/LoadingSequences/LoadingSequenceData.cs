@@ -23,27 +23,27 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>, IAttributeR
     
     public LoadingSequenceData() { }
 
-    public void ResolveType(string name, string? namespaceName, INamedTypeSymbol namedTypeSymbol)
+    public void ResolveType(INamedTypeSymbol namedTypeSymbol)
     {
-        Name = name;
-        TargetNamespace = namespaceName;
+        Name = namedTypeSymbol.Name;
+        TargetNamespace = namedTypeSymbol.GetNameSpaceString();
     }
 
-    public Diagnostic? TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
+    public Diagnostic? TryResolveAttribute(AttributeData attributeData)
     {
         return attributeData switch
         {
-            { AttributeClass.Name: "LoadingSequenceAttribute" } => TryResolveLoadingSequenceAttribute(classDeclarationSyntax, attributeData),
+            { AttributeClass.Name: "LoadingSequenceAttribute" } => TryResolveLoadingSequenceAttribute(attributeData),
             { AttributeClass.Name: "ExcludeLoadingStepAttribute" } => TryResolveExcludedStepsAttribute(attributeData),
             { AttributeClass.Name: "IncludeLoadingStepAttribute" } => TryResolveIncludedStepsAttribute(attributeData),
             { AttributeClass.Name: "ExcludeLoadingFeatureAttribute" } => TryResolveExcludedFeaturesAttribute(attributeData),
             { AttributeClass.Name: "IncludeLoadingFeatureAttribute" } => TryResolveIncludedFeaturesAttribute(attributeData),
-            { AttributeClass.Name: "SubstituteLoadingStepAttribute" } => TryResolveSubstitutedStepsAttribute(classDeclarationSyntax, attributeData),
+            { AttributeClass.Name: "SubstituteLoadingStepAttribute" } => TryResolveSubstitutedStepsAttribute(attributeData),
             _ => null
         };
     }
 
-    private Diagnostic? TryResolveLoadingSequenceAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
+    private Diagnostic? TryResolveLoadingSequenceAttribute(AttributeData attributeData)
     {
         try
         {
@@ -51,7 +51,7 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>, IAttributeR
 
             if (targetLoadingStepsFilter == null)
             {
-                return Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "LoadingSequenceAttribute", classDeclarationSyntax.Identifier.Text);
+                return Diagnostic.Create(IncorrectAttributeData, attributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation(), attributeData.AttributeClass?.Name);
             }
 
             Include = (Include)targetLoadingStepsFilter;
@@ -102,14 +102,14 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>, IAttributeR
         return null;
     }
 
-    private Diagnostic? TryResolveSubstitutedStepsAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
+    private Diagnostic? TryResolveSubstitutedStepsAttribute(AttributeData attributeData)
     {
         var targetTypesArguments = attributeData.ConstructorArguments.FirstOrDefault().Values;
         var replacementTypesArguments = attributeData.ConstructorArguments.LastOrDefault().Values;
 
         if (targetTypesArguments.Any(x => x.Value is null) || replacementTypesArguments.Any(x => x.Value is null))
         {
-            return Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "SubstituteLoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
+            return Diagnostic.Create(IncorrectAttributeData, attributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation(), attributeData.AttributeClass?.Name);
         }
 
         //TODO: prevent boxing

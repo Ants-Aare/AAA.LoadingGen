@@ -13,8 +13,10 @@ public class LoadingStepGenerator
 
     public static void GenerateOutput(SourceProductionContext context, LoadingStepData loadingStepData)
     {
-        var stringBuilder = new StringBuilder();
+        if (string.IsNullOrEmpty(loadingStepData.Name))
+            return;
 
+        var stringBuilder = new StringBuilder();
         try
         {
             stringBuilder.AppendGenerationWarning(GeneratorName, loadingStepData.TargetNamespace + loadingStepData.Name);
@@ -52,7 +54,7 @@ public class LoadingStepGenerator
                         default:
                             break;
                     }
-                    
+
                     // using (new BracketsBuilder(stringBuilder, 2))
                     // {
                     //     

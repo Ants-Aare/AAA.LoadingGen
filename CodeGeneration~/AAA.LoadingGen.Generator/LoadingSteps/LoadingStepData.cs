@@ -9,7 +9,7 @@ using static AAA.SourceGenerators.Common.CommonDiagnostics;
 
 namespace AAA.LoadingGen.Generator;
 
-public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver, ITypeResolver, IConstructorResolver
+public class LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver, ITypeResolver, IConstructorResolver
 {
     public string Name = string.Empty;
     public string NameCamelCase = string.Empty;
@@ -21,13 +21,15 @@ public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver,
     public readonly List<string> AdditionalData = new();
     public bool IsConstructable = true;
 
-    public LoadingStepData() { }
-
-    public void ResolveType(string name, string? namespaceName, INamedTypeSymbol namedTypeSymbol)
+    public LoadingStepData()
     {
-        Name = name;
-        NameCamelCase = name.FirstCharToLower();
-        TargetNamespace = namespaceName;
+    }
+
+    public void ResolveType(INamedTypeSymbol namedTypeSymbol)
+    {
+        Name = namedTypeSymbol.Name;
+        NameCamelCase = Name.FirstCharToLower();
+        TargetNamespace = namedTypeSymbol.GetNameSpaceString();
 
         INamedTypeSymbol? baseType = namedTypeSymbol.BaseType;
         while (baseType != null)
@@ -38,10 +40,11 @@ public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver,
                 IsConstructable = false;
                 break;
             }
+        
             baseType = baseType.BaseType;
         }
     }
-    
+
     public Diagnostic? TryResolveConstructor(IMethodSymbol ctor)
     {
         if (!IsConstructable)
@@ -51,12 +54,12 @@ public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver,
             IsConstructable = false;
         return null;
     }
-    
-    public Diagnostic? TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
+
+    public Diagnostic? TryResolveAttribute(AttributeData attributeData)
     {
         return attributeData switch
         {
-            { AttributeClass.Name: "LoadingStepAttribute" } => TryResolveLoadingStepAttribute(classDeclarationSyntax, attributeData),
+            { AttributeClass.Name: "LoadingStepAttribute" } => TryResolveLoadingStepAttribute(attributeData),
             { AttributeClass.Name: "FeatureTagAttribute" } => TryResolveFeatureTagAttribute(attributeData),
             { AttributeClass.Name: "RequiresLoadingDependencyAttribute" } => TryResolveDependenciesAttribute(attributeData),
             { AttributeClass.Name: "ExcludedByDefaultAttribute" } => TryResolveExcludedAttribute(),
@@ -64,12 +67,12 @@ public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver,
         };
     }
 
-    private Diagnostic? TryResolveLoadingStepAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
+    private Diagnostic? TryResolveLoadingStepAttribute(AttributeData attributeData)
     {
         var targetLoadingType = attributeData.ConstructorArguments.FirstOrDefault().Value;
         if (targetLoadingType == null)
         {
-            return Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "LoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
+            return Diagnostic.Create(IncorrectAttributeData, attributeData.ApplicationSyntaxReference?.GetSyntax().GetLocation(), attributeData.AttributeClass?.Name);
         }
 
         LoadingType = (LoadingType)targetLoadingType;

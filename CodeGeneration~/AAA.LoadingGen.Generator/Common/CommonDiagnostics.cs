@@ -20,14 +20,14 @@ public static class CommonDiagnostics
 
     public static readonly DiagnosticDescriptor ExceptionOccured = new(id: "COM003",
         title: "Exception was caught while Generating",
-        messageFormat: "Exception occured in {0}. Message: {1}.",
+        messageFormat: "Exception occured in Generator Method {0}. Origin: {1} Message: {2}.",
         category: "Unexpected",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor IncorrectAttributeData = new(id: "COM004",
         title: "Failed to Parse Attribute Data",
-        messageFormat: "Could not parse the data of Attribute {0} in {1}",
+        messageFormat: "Could not parse the data of Attribute {0}",
         category: "Unexpected",
         DiagnosticSeverity.Error,
         isEnabledByDefault: true);

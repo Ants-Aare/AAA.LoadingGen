@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
+using AAA.LoadingGen.Generator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -8,76 +11,152 @@ namespace AAA.SourceGenerators.Common;
 
 public static class CommonTransforms
 {
-    public static ResultOrDiagnostics<T> TransformAttributeResolved<T>(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-        where T : IAttributeResolver, ITypeResolver, new()
+    public static ResultOrDiagnostics<T> TransformResolved<T>(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+        where T : new()
     {
-        var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+        var instance = new T();
+        var resultOrDiagnostics = new ResultOrDiagnostics<T>(instance);
         try
         {
-            if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
+            var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+
+            if (context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
                 return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
 
-            var instance = new T();
-            instance.ResolveType(classDeclarationSyntax.Identifier.Text, namedTypeSymbol.GetNameSpaceString(), namedTypeSymbol);
-
-            var attributeDatas = namedTypeSymbol.GetAttributes();
-            foreach (var attributeData in attributeDatas)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var diagnostic = instance.TryResolveAttribute(classDeclarationSyntax, attributeData);
-                if (diagnostic is not null)
-                    return diagnostic;
-            }
-
-            return instance;
+            var diagnostics = Resolve(instance, namedTypeSymbol, cancellationToken);
+            resultOrDiagnostics.TryAddDiagnostics(diagnostics);
+            return resultOrDiagnostics;
         }
         catch (Exception e)
         {
-            return Diagnostic.Create(CommonDiagnostics.ExceptionOccured, classDeclarationSyntax.GetLocation(),
-                nameof(TransformAttributeResolved) + classDeclarationSyntax.Identifier.Text, e.ToString());
+            var diagnostic = Diagnostic.Create(CommonDiagnostics.ExceptionOccured, context.Node.GetLocation(),
+                nameof(TransformResolved), context.Node.ToFullString(), e.ToString());
+            resultOrDiagnostics.TryAddDiagnostic(diagnostic);
         }
+
+        return resultOrDiagnostics;
     }
 
-    public static ResultOrDiagnostics<T> TransformAttributeCtorResolved<T>(GeneratorSyntaxContext context, CancellationToken cancellationToken)
-        where T : IAttributeResolver, ITypeResolver, IConstructorResolver, new()
-    {
-        var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+    // public static ResultOrDiagnostics<T> TransformResolved<T>(this INamedTypeSymbol namedTypeSymbol, CancellationToken cancellationToken)
+    //     where T : new()
+    // {
+    //     var instance = new T();
+    //     var resultOrDiagnostics = new ResultOrDiagnostics<T>(instance);
+    //     try
+    //     {
+    //         resultOrDiagnostics.TryAddDiagnostics(Resolve(instance, namedTypeSymbol, cancellationToken));
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         var diagnostic = Diagnostic.Create(CommonDiagnostics.ExceptionOccured, Location.None,
+    //             nameof(TransformResolved), namedTypeSymbol.ToDisplayString(), e.ToString());
+    //         resultOrDiagnostics.TryAddDiagnostic(diagnostic);
+    //     }
+    //
+    //     return resultOrDiagnostics;
+    // }
 
-        try
+    // public static ResultOrDiagnostics<ImmutableArray<T>> TransformResolved<T>(Compilation compilation, CancellationToken ct, Func<INamedTypeSymbol,bool> filter)
+    //     where T : new()
+    // {
+    //     var diagnostics = new List<Diagnostic>();
+    //     var allInstances = new List<T>();
+    //     try
+    //     {
+    //         var stack = new Stack<INamespaceSymbol>();
+    //         stack.Push(compilation.GlobalNamespace);
+    //         while (stack.Count > 0)
+    //         {
+    //             ct.ThrowIfCancellationRequested();
+    //             foreach (var member in stack.Pop().GetMembers())
+    //             {
+    //                 ct.ThrowIfCancellationRequested();
+    //                 switch (member)
+    //                 {
+    //                     case INamespaceSymbol namespaceSymbol:
+    //                         stack.Push(namespaceSymbol);
+    //                         break;
+    //                     case INamedTypeSymbol namedTypeSymbol:
+    //                     {
+    //                         if (!filter(namedTypeSymbol))
+    //                             continue;
+    //
+    //                         var instance = new T();
+    //                         diagnostics.AddRange(Resolve<T>(instance, namedTypeSymbol, ct));
+    //                         allInstances.Add(instance);
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         var diagnostic = Diagnostic.Create(CommonDiagnostics.ExceptionOccured, Location.None,
+    //             nameof(TransformResolved), "Compilation", e.ToString());
+    //         diagnostics.Add(diagnostic);
+    //     }
+    //
+    //     if (allInstances.Count == 0)
+    //         return new ResultOrDiagnostics<ImmutableArray<T>>(diagnostics);
+    //     
+    //     allInstances.Sort();
+    //     var immutableArray = allInstances.ToImmutableArray();
+    //     return new ResultOrDiagnostics<ImmutableArray<T>>(immutableArray).TryAddDiagnostics(diagnostics);
+    // }
+
+    public static List<Diagnostic> Resolve<T>(T instance, INamedTypeSymbol namedTypeSymbol, CancellationToken cancellationToken)
+    {
+        var diagnostics = new List<Diagnostic>();
+
+        if (instance is ITypeResolver typeResolver)
+            typeResolver.ResolveType(namedTypeSymbol);
+        
+        if (instance is IAttributeResolver attributeResolver)
         {
-            if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
-                return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
-        
-            var instance = new T();
-            instance.ResolveType(classDeclarationSyntax.Identifier.Text, namedTypeSymbol.GetNameSpaceString(), namedTypeSymbol);
-        
-            var attributeDatas = namedTypeSymbol.GetAttributes();
-            foreach (var attributeData in attributeDatas)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                var diagnostic = instance.TryResolveAttribute(classDeclarationSyntax, attributeData);
-                if (diagnostic is not null)
-                    return diagnostic;
-            }
-        
-            foreach (var constructor in namedTypeSymbol.Constructors)
-            {
-                if (constructor is null)
-                    continue;
-                cancellationToken.ThrowIfCancellationRequested();
-        
-                var diagnostic = instance.TryResolveConstructor(constructor);
-                if (diagnostic is not null)
-                    return diagnostic;
-            }
-        
-            return instance;
+            var x = ResolveAttributes(attributeResolver, namedTypeSymbol, cancellationToken);
+            if (x != null) diagnostics.Add(x);
         }
-        catch (Exception e)
+
+        if (instance is IConstructorResolver constructorResolver)
         {
-            return Diagnostic.Create(CommonDiagnostics.ExceptionOccured, classDeclarationSyntax.GetLocation(),
-                nameof(TransformAttributeCtorResolved) + classDeclarationSyntax.Identifier.Text, e.ToString());
+            var x = ResolveConstructors(constructorResolver, namedTypeSymbol, cancellationToken);
+            if (x != null) diagnostics.Add(x);
         }
+
+        return diagnostics;
+    }
+
+    public static Diagnostic? ResolveAttributes<T>(this T instance, INamedTypeSymbol namedTypeSymbol, CancellationToken ct)
+        where T : IAttributeResolver
+    {
+        var attributeDatas = namedTypeSymbol.GetAttributes();
+        foreach (var attributeData in attributeDatas)
+        {
+            ct.ThrowIfCancellationRequested();
+            var diagnostic = instance.TryResolveAttribute(attributeData);
+            if (diagnostic is not null)
+                return diagnostic;
+        }
+
+        return null;
+    }
+
+    public static Diagnostic? ResolveConstructors<T>(this T instance, INamedTypeSymbol namedTypeSymbol, CancellationToken ct)
+        where T : IConstructorResolver
+    {
+        foreach (var constructor in namedTypeSymbol.Constructors)
+        {
+            if (constructor is null)
+                continue;
+            ct.ThrowIfCancellationRequested();
+
+            var diagnostic = instance.TryResolveConstructor(constructor);
+            if (diagnostic is not null)
+                return diagnostic;
+        }
+
+        return null;
     }
 }
 
@@ -88,10 +167,10 @@ public interface IConstructorResolver
 
 public interface IAttributeResolver
 {
-    Diagnostic? TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData);
+    Diagnostic? TryResolveAttribute(AttributeData attributeData);
 }
 
 public interface ITypeResolver
 {
-    public void ResolveType(string name, string? namespaceName, INamedTypeSymbol namedTypeSymbol);
+    public void ResolveType(INamedTypeSymbol namedTypeSymbol);
 }

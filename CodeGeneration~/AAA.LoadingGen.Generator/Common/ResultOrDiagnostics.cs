@@ -4,24 +4,42 @@ using Microsoft.CodeAnalysis;
 
 namespace AAA.SourceGenerators.Common;
 
-public readonly struct ResultOrDiagnostics<T> : IEquatable<ResultOrDiagnostics<T>>
+public class ResultOrDiagnostics<T> : IEquatable<ResultOrDiagnostics<T>>
 {
     public readonly T? Result;
-    public readonly Diagnostic? Diagnostic;
+    public readonly List<Diagnostic> Diagnostics = new();
+    public bool HasDiagnostics => Diagnostics.Count > 0;
 
+    public ResultOrDiagnostics(){}
     public ResultOrDiagnostics(T result)
     {
         Result = result;
     }
 
-    public ResultOrDiagnostics(Diagnostic diagnostic)
+    public ResultOrDiagnostics(Diagnostic diagnostics)
     {
-        Diagnostic = diagnostic;
+        Diagnostics.Add(diagnostics);
+    }
+    public ResultOrDiagnostics(IEnumerable<Diagnostic> diagnostics)
+    {
+        Diagnostics.AddRange(diagnostics);
+    }
+
+    public void TryAddDiagnostic(Diagnostic? diagnostic)
+    {
+        if (diagnostic is null)
+            return;
+        Diagnostics.Add(diagnostic);
+    }
+    public ResultOrDiagnostics<T> TryAddDiagnostics(IEnumerable<Diagnostic> diagnostic)
+    {
+        Diagnostics.AddRange(diagnostic);
+        return this;
     }
 
     public bool Equals(ResultOrDiagnostics<T> other)
     {
-        return EqualityComparer<T?>.Default.Equals(Result, other.Result) && Equals(Diagnostic, other.Diagnostic);
+        return EqualityComparer<T?>.Default.Equals(Result, other.Result) && Equals(Diagnostics, other.Diagnostics);
     }
 
     public override bool Equals(object? obj)
@@ -33,10 +51,10 @@ public readonly struct ResultOrDiagnostics<T> : IEquatable<ResultOrDiagnostics<T
     {
         unchecked
         {
-            return (EqualityComparer<T?>.Default.GetHashCode(Result) * 397) ^ (Diagnostic != null ? Diagnostic.GetHashCode() : 0);
+            return (EqualityComparer<T?>.Default.GetHashCode(Result) * 397) ^ (Diagnostics != null ? Diagnostics.GetHashCode() : 0);
         }
     }
 
-    public static implicit operator ResultOrDiagnostics<T>(T result) => new ResultOrDiagnostics<T>(result);
-    public static implicit operator ResultOrDiagnostics<T>(Diagnostic diagnostic) => new ResultOrDiagnostics<T>(diagnostic);
+    public static implicit operator ResultOrDiagnostics<T>(T result) => new(result);
+    public static implicit operator ResultOrDiagnostics<T>(Diagnostic diagnostic) => new(diagnostic);
 }

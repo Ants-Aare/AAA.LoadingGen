@@ -86,6 +86,8 @@ public class LoadingSequenceProvider
             foreach (var includedStep in data.loadingSequenceData.IncludedSteps.Value)
             {
                 var step = data.stepDatas.FirstOrDefault(x => x.Name == includedStep);
+                if(step is null)
+                    continue;
                 data.loadingSequenceData.AdditionalData.Add($"Added included step {includedStep}.");
                 filteredLoadingStepDatas.Add(step);
             }
@@ -97,10 +99,12 @@ public class LoadingSequenceProvider
         {
             foreach ((string target, string replacement) substitutedStep in data.loadingSequenceData.SubstitutedSteps)
             {
-                data.loadingSequenceData.AdditionalData.Add($"Substituted step {substitutedStep.target} with {substitutedStep.replacement}.");
-                filteredLoadingStepDatas.RemoveWhere(x => x.Name == substitutedStep.target);
                 var replacementStep = data.stepDatas.FirstOrDefault(x => x.Name == substitutedStep.replacement);
+                if(replacementStep is null)
+                    continue;
+                filteredLoadingStepDatas.RemoveWhere(x => x.Name == substitutedStep.target);
                 filteredLoadingStepDatas.Add(replacementStep);
+                data.loadingSequenceData.AdditionalData.Add($"Substituted step {substitutedStep.target} with {substitutedStep.replacement}.");
                 
                 //TODO: Update dependencies here
             }
