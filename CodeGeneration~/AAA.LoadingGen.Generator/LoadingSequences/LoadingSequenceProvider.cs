@@ -22,15 +22,52 @@ public class LoadingSequenceProvider
     }
 
     public static ResultOrDiagnostics<LoadingSequenceDataWithDependencies> FilterDependencies(
-        (LoadingSequenceData loadingSequenceData, ImmutableArray<LoadingStepData> loadingStepDatas) data,
+        (LoadingSequenceData loadingSequenceData, ImmutableArray<LoadingStepData> stepDatas) data,
         CancellationToken cancellationToken)
     {
         var filteredLoadingStepDatas = data.loadingSequenceData.Include switch
         {
             Include.None => new HashSet<LoadingStepData>(),
-            Include.All => new HashSet<LoadingStepData>(data.loadingStepDatas.Where(x => !x.ExcludedByDefault)),
+            Include.All => new HashSet<LoadingStepData>(data.stepDatas.Where(x => !x.ExcludedByDefault)),
             _ => throw new ArgumentOutOfRangeException()
         };
+        
+
+        if (data.loadingSequenceData.IncludedFeatures is not null)
+        {
+            foreach (var includedFeatureTag in data.loadingSequenceData.IncludedFeatures.Value)
+            {
+                data.loadingSequenceData.AdditionalData.Add($"Added Feature {includedFeatureTag}:");
+
+                foreach (var stepData in data.stepDatas)
+                {
+                    if (stepData.HasFeatureTag(includedFeatureTag))
+                    {
+                        data.loadingSequenceData.AdditionalData.Add($"    Added Step {stepData.Name}.");
+                        filteredLoadingStepDatas.Add(stepData);
+                    }
+                }
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        
+
+        if (data.loadingSequenceData.ExcludedFeatures is not null)
+        {
+            foreach (var excludedFeatureTag in data.loadingSequenceData.ExcludedFeatures.Value)
+            {
+                data.loadingSequenceData.AdditionalData.Add($"Removed Feature {excludedFeatureTag}:");
+                filteredLoadingStepDatas.RemoveWhere(x =>
+                {
+                    var hasFeatureTag = x.HasFeatureTag(excludedFeatureTag);
+                    if(hasFeatureTag)
+                        data.loadingSequenceData.AdditionalData.Add($"    Removed Step {x.Name}.");
+                    return hasFeatureTag;
+                });
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        
 
         if (data.loadingSequenceData.ExcludedSteps is not null)
         {
@@ -39,27 +76,33 @@ public class LoadingSequenceProvider
                 data.loadingSequenceData.AdditionalData.Add($"Removed excluded step: {excludedStep}");
                 filteredLoadingStepDatas.RemoveWhere(x => x.Name == excludedStep);
             }
+            cancellationToken.ThrowIfCancellationRequested();
         }
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (data.loadingSequenceData.ExcludedFeatures is not null)
+        if (data.loadingSequenceData.IncludedSteps is not null)
         {
-            foreach (var excludedFeatureTag in data.loadingSequenceData.ExcludedFeatures.Value)
+            foreach (var includedStep in data.loadingSequenceData.IncludedSteps.Value)
             {
-                filteredLoadingStepDatas.RemoveWhere(x => x.HasFeatureTag(excludedFeatureTag));
+                var step = data.stepDatas.FirstOrDefault(x => x.Name == includedStep);
+                data.loadingSequenceData.AdditionalData.Add($"Added included step {includedStep}.");
+                filteredLoadingStepDatas.Add(step);
             }
+            cancellationToken.ThrowIfCancellationRequested();
         }
-
-        cancellationToken.ThrowIfCancellationRequested();
+        
 
         if (data.loadingSequenceData.SubstitutedSteps is not null)
         {
             foreach ((string target, string replacement) substitutedStep in data.loadingSequenceData.SubstitutedSteps)
             {
+                data.loadingSequenceData.AdditionalData.Add($"Substituted step {substitutedStep.target} with {substitutedStep.replacement}.");
                 filteredLoadingStepDatas.RemoveWhere(x => x.Name == substitutedStep.target);
-                var replacementStep = data.loadingStepDatas.FirstOrDefault(x => x.Name == substitutedStep.replacement);
+                var replacementStep = data.stepDatas.FirstOrDefault(x => x.Name == substitutedStep.replacement);
                 filteredLoadingStepDatas.Add(replacementStep);
+                
+                //TODO: Update dependencies here
             }
         }
 

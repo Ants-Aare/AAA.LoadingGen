@@ -36,6 +36,6 @@ public readonly struct LoadingSequenceDataWithDependencies : IEquatable<LoadingS
     public override string ToString()
     {
         return @$"{LoadingSequenceData.ToString()}
-{LoadingSteps.Aggregate("LoadingSteps:\n", (s, data) => $"{s}\n{data.Name}\n")}";
+{LoadingSteps.Aggregate($"LoadingSteps ({LoadingSteps.Length}):\n", (s, data) => $"{s}\n{data.Name}\n")}";
     }
 }

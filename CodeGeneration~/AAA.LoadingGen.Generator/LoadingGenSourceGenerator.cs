@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using AAA.LoadingGen.Generator.LoadingSequences;
@@ -20,16 +21,16 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
             .CreateSyntaxProvider(LoadingStepProvider.Filter, CommonTransforms.TransformAttributeCtorResolved<LoadingStepData>)
             .HandleDiagnostics(context);
 
-        // var loadingSequences = context.SyntaxProvider
-        //     .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformAttributeResolved<LoadingSequenceData>)
-        //     .HandleDiagnostics(context);
-        //
-        // var loadingSequencesWithDependencies = loadingSequences
-        //     .Combine(loadingSteps.Collect())
-        //     .Select(LoadingSequenceProvider.FilterDependencies)
-        //     .HandleDiagnostics(context);
+        var loadingSequences = context.SyntaxProvider
+            .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformAttributeResolved<LoadingSequenceData>)
+            .HandleDiagnostics(context);
+
+        var loadingSequencesWithDependencies = loadingSequences
+            .Combine(loadingSteps.Collect())
+            .Select(LoadingSequenceProvider.FilterDependencies)
+            .HandleDiagnostics(context);
 
         context.RegisterSourceOutput(loadingSteps, LoadingStepGenerator.GenerateOutput);
-        // context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
+        context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
     }
 }

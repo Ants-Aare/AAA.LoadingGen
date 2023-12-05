@@ -30,7 +30,7 @@ public static class StringBuildersUtility
             stringBuilder.Append(',').Append(arguments.Current.type).Append(' ').Append(arguments.Current.argName);
         }
         
-        stringBuilder.Append(')');
+        stringBuilder.Append(")\n");
         return stringBuilder;
     }
 }

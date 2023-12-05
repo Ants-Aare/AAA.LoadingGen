@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -17,22 +18,8 @@ public static class DiagnosticsUtility
             .Select((s, _) => s.Diagnostic!);
 
         context.RegisterSourceOutput(diagnostics, ReportDiagnostics);
-
-        context.RegisterSourceOutput(diagnostics.Collect(), ReportDiagnosticsToComments);
         return resultsOrDiagnostics
-            // .Where(x=>x is not null)
+            .Where(x => x.Result is not null)
             .Select((s, _) => s.Result!);
     }
-
-    private static void ReportDiagnosticsToComments(SourceProductionContext context, ImmutableArray<Diagnostic> immutableArray)
-    {
-        var stringBuilder = new StringBuilder("namespace AAA.Core{public partial class SourceGeneratorDiagnostics{}}");
-        foreach (var diagnostic in immutableArray)
-        {
-            stringBuilder.Append("\n//").Append(diagnostic.ToString());
-        }
-
-        context.AddSource($"Diagnostics.g.cs", stringBuilder.ToString());
-    }
 }
-

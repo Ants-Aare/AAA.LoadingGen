@@ -24,20 +24,22 @@ public class LoadingSequenceGenerator
             stringBuilder.AppendGenerationWarning(GeneratorName, sequenceData.TargetNamespace + sequenceData.Name);
             stringBuilder.Append($"\n/*\n{loadingSequenceDataWithDependencies.ToString()}*/\n");
             stringBuilder.AppendLine(GenerationStringsUtility.Usings);
-
+            foreach (var stepData in stepDatas)
+                stringBuilder.AppendLine($"using {stepData.TargetNamespace};");
+            
             using (new NamespaceBuilder(stringBuilder, sequenceData.TargetNamespace))
             {
                 stringBuilder.AppendLine($"    public partial class {sequenceData.Name}");
-
+            
                 using (new BracketsBuilder(stringBuilder, 1))
                 {
                     foreach (var stepData in stepDatas)
                         stringBuilder.AppendLine($"        readonly {stepData.Name} {stepData.NameCamelCase};");
-
-                    stringBuilder.AppendLine($"        public {sequenceData.Name}");
+            
+                    stringBuilder.Append($"        public {sequenceData.Name}");
                     stringBuilder.AppendMethodSignature(stepDatas.Where(x => !x.IsConstructable).Select<LoadingStepData, (string, string)>(x => new(x.Name, x.NameCamelCase))
                         .GetEnumerator());
-
+            
                     using (new BracketsBuilder(stringBuilder, 2))
                     {
                         foreach (var stepData in stepDatas)
@@ -48,7 +50,7 @@ public class LoadingSequenceGenerator
                                 stringBuilder.AppendLine($"            this.{stepData.NameCamelCase} = {stepData.NameCamelCase};");
                         }
                     }
-
+            
                     stringBuilder.AppendLine("        public async UniTask StartLoadingSequenceAsync(CancellationToken ct)");
                     using (new BracketsBuilder(stringBuilder, 2))
                     {
@@ -56,11 +58,11 @@ public class LoadingSequenceGenerator
                         {
                             if (stepData.LoadingType == LoadingType.Asynchronous)
                             {
-                                stringBuilder.AppendLine($"            await {stepData.Name}.StartLoadingStepAsync(ct);");
+                                stringBuilder.AppendLine($"            await {stepData.NameCamelCase}.StartLoadingStepAsync(ct);");
                             }
                             else
                             {
-                                stringBuilder.AppendLine($"            {stepData.Name}.StartLoadingStep();");
+                                stringBuilder.AppendLine($"            {stepData.NameCamelCase}.StartLoadingStep();");
                             }
                         }
                     }

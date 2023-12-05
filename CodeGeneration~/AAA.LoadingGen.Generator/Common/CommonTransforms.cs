@@ -42,14 +42,15 @@ public static class CommonTransforms
         where T : IAttributeResolver, ITypeResolver, IConstructorResolver, new()
     {
         var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+
         try
         {
             if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
                 return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
-
+        
             var instance = new T();
             instance.ResolveType(classDeclarationSyntax.Identifier.Text, namedTypeSymbol.GetNameSpaceString(), namedTypeSymbol);
-
+        
             var attributeDatas = namedTypeSymbol.GetAttributes();
             foreach (var attributeData in attributeDatas)
             {
@@ -58,18 +59,18 @@ public static class CommonTransforms
                 if (diagnostic is not null)
                     return diagnostic;
             }
-
+        
             foreach (var constructor in namedTypeSymbol.Constructors)
             {
                 if (constructor is null)
                     continue;
                 cancellationToken.ThrowIfCancellationRequested();
-
+        
                 var diagnostic = instance.TryResolveConstructor(constructor);
                 if (diagnostic is not null)
                     return diagnostic;
             }
-
+        
             return instance;
         }
         catch (Exception e)

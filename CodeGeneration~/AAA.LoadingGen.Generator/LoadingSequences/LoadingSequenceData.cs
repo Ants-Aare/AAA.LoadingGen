@@ -15,7 +15,9 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>, IAttributeR
     public string? TargetNamespace;
     public Include Include = Include.All;
     public ImmutableArray<string>? ExcludedSteps;
+    public ImmutableArray<string>? IncludedSteps;
     public ImmutableArray<string>? ExcludedFeatures;
+    public ImmutableArray<string>? IncludedFeatures;
     public ImmutableArray<(string, string)>? SubstitutedSteps;
     public List<string> AdditionalData = new();
     
@@ -33,7 +35,9 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>, IAttributeR
         {
             { AttributeClass.Name: "LoadingSequenceAttribute" } => TryResolveLoadingSequenceAttribute(classDeclarationSyntax, attributeData),
             { AttributeClass.Name: "ExcludeLoadingStepAttribute" } => TryResolveExcludedStepsAttribute(attributeData),
+            { AttributeClass.Name: "IncludeLoadingStepAttribute" } => TryResolveIncludedStepsAttribute(attributeData),
             { AttributeClass.Name: "ExcludeLoadingFeatureAttribute" } => TryResolveExcludedFeaturesAttribute(attributeData),
+            { AttributeClass.Name: "IncludeLoadingFeatureAttribute" } => TryResolveIncludedFeaturesAttribute(attributeData),
             { AttributeClass.Name: "SubstituteLoadingStepAttribute" } => TryResolveSubstitutedStepsAttribute(classDeclarationSyntax, attributeData),
             _ => null
         };
@@ -70,10 +74,28 @@ public struct LoadingSequenceData : IEquatable<LoadingSequenceData>, IAttributeR
             .ToImmutableArray();
         return null;
     }
+    private Diagnostic? TryResolveIncludedStepsAttribute(AttributeData attributeData)
+    {
+        IncludedSteps = attributeData.ConstructorArguments
+            .FirstOrDefault()
+            .Values
+            .Where(x => x.Value is not null)
+            .Select(x => ((INamedTypeSymbol)x.Value!).Name)
+            .ToImmutableArray();
+        return null;
+    }
 
     private Diagnostic? TryResolveExcludedFeaturesAttribute(AttributeData attributeData)
     {
         ExcludedFeatures = attributeData.ConstructorArguments.FirstOrDefault().Values
+            .Where(x => x.Value is not null)
+            .Select(x => (string)x.Value!)
+            .ToImmutableArray();
+        return null;
+    }
+    private Diagnostic? TryResolveIncludedFeaturesAttribute(AttributeData attributeData)
+    {
+        IncludedFeatures = attributeData.ConstructorArguments.FirstOrDefault().Values
             .Where(x => x.Value is not null)
             .Select(x => (string)x.Value!)
             .ToImmutableArray();
