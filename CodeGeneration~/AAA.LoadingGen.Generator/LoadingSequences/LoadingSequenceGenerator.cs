@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -17,55 +18,59 @@ public class LoadingSequenceGenerator
     {
         var sequenceData = loadingSequenceDataWithDependencies.LoadingSequenceData;
         var stepDatas = loadingSequenceDataWithDependencies.LoadingSteps;
-
-        var stringBuilder = new StringBuilder().AppendGenerationWarning(GeneratorName, sequenceData.Name);
-        stringBuilder.Append($"\n/*\n{loadingSequenceDataWithDependencies.ToString()}*/\n");
-
-        stringBuilder.AppendLine(GenerationStringsUtility.Usings);
-
-        using (new NamespaceBuilder(stringBuilder, sequenceData.TargetNamespace))
+        var stringBuilder = new StringBuilder();
+        try
         {
-            stringBuilder.AppendLine($"    public partial class {sequenceData.Name}");
+            stringBuilder.AppendGenerationWarning(GeneratorName, sequenceData.TargetNamespace + sequenceData.Name);
+            stringBuilder.Append($"\n/*\n{loadingSequenceDataWithDependencies.ToString()}*/\n");
+            stringBuilder.AppendLine(GenerationStringsUtility.Usings);
 
-            using (new BracketsBuilder(stringBuilder, 1))
+            using (new NamespaceBuilder(stringBuilder, sequenceData.TargetNamespace))
             {
-                foreach (var stepData in stepDatas)
-                    stringBuilder.AppendLine($"        readonly {stepData.Name} {stepData.NameCamelCase};");
-                
-                stringBuilder.AppendLine($"        public {sequenceData.Name}");
-                stringBuilder.AppendMethodSignature(stepDatas.Where(x => !x.IsConstructable).Select<LoadingStepData, (string, string)>(x => new(x.Name, x.NameCamelCase))
-                    .GetEnumerator());
+                stringBuilder.AppendLine($"    public partial class {sequenceData.Name}");
 
-                using (new BracketsBuilder(stringBuilder, 2))
+                using (new BracketsBuilder(stringBuilder, 1))
                 {
                     foreach (var stepData in stepDatas)
+                        stringBuilder.AppendLine($"        readonly {stepData.Name} {stepData.NameCamelCase};");
+
+                    stringBuilder.AppendLine($"        public {sequenceData.Name}");
+                    stringBuilder.AppendMethodSignature(stepDatas.Where(x => !x.IsConstructable).Select<LoadingStepData, (string, string)>(x => new(x.Name, x.NameCamelCase))
+                        .GetEnumerator());
+
+                    using (new BracketsBuilder(stringBuilder, 2))
                     {
-                        if(stepData.IsConstructable)
-                            stringBuilder.AppendLine($"            {stepData.NameCamelCase} = new {stepData.Name}();");
-                        else
-                            stringBuilder.AppendLine($"            this.{stepData.NameCamelCase} = {stepData.NameCamelCase};");
-                    }
-                }
-                
-                stringBuilder.AppendLine("        public async UniTask StartLoadingSequenceAsync(CancellationToken ct)");
-                using (new BracketsBuilder(stringBuilder, 2))
-                {
-                    foreach (var stepData in stepDatas)
-                    {
-                        if (stepData.LoadingType == LoadingType.Asynchronous)
+                        foreach (var stepData in stepDatas)
                         {
-                            stringBuilder.AppendLine($"            await {stepData.Name}.StartLoadingStepAsync(ct);");
+                            if (stepData.IsConstructable)
+                                stringBuilder.AppendLine($"            {stepData.NameCamelCase} = new {stepData.Name}();");
+                            else
+                                stringBuilder.AppendLine($"            this.{stepData.NameCamelCase} = {stepData.NameCamelCase};");
                         }
-                        else
-                        {
-                            stringBuilder.AppendLine($"            {stepData.Name}.StartLoadingStep();");
+                    }
 
+                    stringBuilder.AppendLine("        public async UniTask StartLoadingSequenceAsync(CancellationToken ct)");
+                    using (new BracketsBuilder(stringBuilder, 2))
+                    {
+                        foreach (var stepData in stepDatas)
+                        {
+                            if (stepData.LoadingType == LoadingType.Asynchronous)
+                            {
+                                stringBuilder.AppendLine($"            await {stepData.Name}.StartLoadingStepAsync(ct);");
+                            }
+                            else
+                            {
+                                stringBuilder.AppendLine($"            {stepData.Name}.StartLoadingStep();");
+                            }
                         }
                     }
                 }
             }
         }
-
+        catch (Exception e)
+        {
+            stringBuilder.AppendLine(e.ToString());
+        }
         context.AddSource($"{sequenceData.Name}.Generated.cs", stringBuilder.ToString());
     }
 }

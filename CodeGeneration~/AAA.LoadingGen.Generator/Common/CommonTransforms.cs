@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -15,15 +16,16 @@ public static class CommonTransforms
         {
             if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
                 return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
-            
+
             var instance = new T();
-            instance.ResolveType(classDeclarationSyntax.Identifier.Text, namedTypeSymbol.GetNameSpaceString());
-            
+            instance.ResolveType(classDeclarationSyntax.Identifier.Text, namedTypeSymbol.GetNameSpaceString(), namedTypeSymbol);
+
             var attributeDatas = namedTypeSymbol.GetAttributes();
             foreach (var attributeData in attributeDatas)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (!instance.TryResolveAttribute(classDeclarationSyntax, attributeData, out var diagnostic) && diagnostic != null)
+                var diagnostic = instance.TryResolveAttribute(classDeclarationSyntax, attributeData);
+                if (diagnostic is not null)
                     return diagnostic;
             }
 
@@ -31,16 +33,64 @@ public static class CommonTransforms
         }
         catch (Exception e)
         {
-            return Diagnostic.Create(CommonDiagnostics.ExceptionOccured, classDeclarationSyntax.GetLocation(), nameof(TransformAttributeResolved) + classDeclarationSyntax.Identifier.Text, e.ToString());
+            return Diagnostic.Create(CommonDiagnostics.ExceptionOccured, classDeclarationSyntax.GetLocation(),
+                nameof(TransformAttributeResolved) + classDeclarationSyntax.Identifier.Text, e.ToString());
+        }
+    }
+
+    public static ResultOrDiagnostics<T> TransformAttributeCtorResolved<T>(GeneratorSyntaxContext context, CancellationToken cancellationToken)
+        where T : IAttributeResolver, ITypeResolver, IConstructorResolver, new()
+    {
+        var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
+        try
+        {
+            if (ModelExtensions.GetDeclaredSymbol(context.SemanticModel, classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
+                return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
+
+            var instance = new T();
+            instance.ResolveType(classDeclarationSyntax.Identifier.Text, namedTypeSymbol.GetNameSpaceString(), namedTypeSymbol);
+
+            var attributeDatas = namedTypeSymbol.GetAttributes();
+            foreach (var attributeData in attributeDatas)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var diagnostic = instance.TryResolveAttribute(classDeclarationSyntax, attributeData);
+                if (diagnostic is not null)
+                    return diagnostic;
+            }
+
+            foreach (var constructor in namedTypeSymbol.Constructors)
+            {
+                if (constructor is null)
+                    continue;
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var diagnostic = instance.TryResolveConstructor(constructor);
+                if (diagnostic is not null)
+                    return diagnostic;
+            }
+
+            return instance;
+        }
+        catch (Exception e)
+        {
+            return Diagnostic.Create(CommonDiagnostics.ExceptionOccured, classDeclarationSyntax.GetLocation(),
+                nameof(TransformAttributeCtorResolved) + classDeclarationSyntax.Identifier.Text, e.ToString());
         }
     }
 }
 
+public interface IConstructorResolver
+{
+    public Diagnostic? TryResolveConstructor(IMethodSymbol ctor);
+}
+
 public interface IAttributeResolver
 {
-    bool TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData, out Diagnostic? diagnostic);
+    Diagnostic? TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData);
 }
+
 public interface ITypeResolver
 {
-    public void ResolveType(string name, string? namespaceName);
+    public void ResolveType(string name, string? namespaceName, INamedTypeSymbol namedTypeSymbol);
 }

@@ -17,19 +17,19 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var loadingSteps = context.SyntaxProvider
-            .CreateSyntaxProvider(LoadingStepProvider.Filter, CommonTransforms.TransformAttributeResolved<LoadingStepData>)
+            .CreateSyntaxProvider(LoadingStepProvider.Filter, CommonTransforms.TransformAttributeCtorResolved<LoadingStepData>)
             .HandleDiagnostics(context);
 
-        var loadingSequences = context.SyntaxProvider
-            .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformAttributeResolved<LoadingSequenceData>)
-            .HandleDiagnostics(context);
+        // var loadingSequences = context.SyntaxProvider
+        //     .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformAttributeResolved<LoadingSequenceData>)
+        //     .HandleDiagnostics(context);
+        //
+        // var loadingSequencesWithDependencies = loadingSequences
+        //     .Combine(loadingSteps.Collect())
+        //     .Select(LoadingSequenceProvider.FilterDependencies)
+        //     .HandleDiagnostics(context);
 
-        var loadingSequencesWithDependencies = loadingSequences
-            .Combine(loadingSteps.Collect())
-            .Select(LoadingSequenceProvider.FilterDependencies)
-            .HandleDiagnostics(context);
-        
         context.RegisterSourceOutput(loadingSteps, LoadingStepGenerator.GenerateOutput);
-        context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
+        // context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
     }
 }

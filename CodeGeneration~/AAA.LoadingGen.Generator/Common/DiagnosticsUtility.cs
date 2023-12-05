@@ -26,11 +26,10 @@ public static class DiagnosticsUtility
 
     private static void ReportDiagnosticsToComments(SourceProductionContext context, ImmutableArray<Diagnostic> immutableArray)
     {
-        var stringBuilder = new StringBuilder("public partial class SourceGeneratorDiagnostics{}");
+        var stringBuilder = new StringBuilder("namespace AAA.Core{public partial class SourceGeneratorDiagnostics{}}");
         foreach (var diagnostic in immutableArray)
         {
-            stringBuilder.Append("\n//");
-            stringBuilder.Append(diagnostic.ToString());
+            stringBuilder.Append("\n//").Append(diagnostic.ToString());
         }
 
         context.AddSource($"Diagnostics.g.cs", stringBuilder.ToString());

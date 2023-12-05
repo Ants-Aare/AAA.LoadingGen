@@ -9,7 +9,7 @@ using static AAA.SourceGenerators.Common.CommonDiagnostics;
 
 namespace AAA.LoadingGen.Generator;
 
-public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver, ITypeResolver
+public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver, ITypeResolver, IConstructorResolver
 {
     public string Name = string.Empty;
     public string NameCamelCase = string.Empty;
@@ -19,64 +19,85 @@ public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver,
     public ImmutableArray<string>? FeatureTags;
     public ImmutableArray<string>? Dependencies;
     public readonly List<string> AdditionalData = new();
-    public bool IsConstructable;
+    public bool IsConstructable = true;
 
     public LoadingStepData() { }
 
-    public void ResolveType(string name, string? namespaceName)
+    public void ResolveType(string name, string? namespaceName, INamedTypeSymbol namedTypeSymbol)
     {
         Name = name;
         NameCamelCase = name.FirstCharToLower();
         TargetNamespace = namespaceName;
+
+        INamedTypeSymbol? baseType = namedTypeSymbol.BaseType;
+        while (baseType != null)
+        {
+            AdditionalData.Add($"BaseType Name: {baseType.ToDisplayString()}");
+            if (baseType.ToDisplayString() is "UnityEngine.ScriptableObject" or "UnityEngine.MonoBehaviour" or "UnityEngine.Object")
+            {
+                IsConstructable = false;
+                break;
+            }
+            baseType = baseType.BaseType;
+        }
     }
-    public bool TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData, out Diagnostic? diagnostic)
+    
+    public Diagnostic? TryResolveConstructor(IMethodSymbol ctor)
     {
-        diagnostic = null;
+        if (!IsConstructable)
+            return null;
+
+        if (ctor.Parameters.Length > 0)
+            IsConstructable = false;
+        return null;
+    }
+    
+    public Diagnostic? TryResolveAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
+    {
         return attributeData switch
         {
-            { AttributeClass.Name: "LoadingStepAttribute" } => TryResolveLoadingStepAttribute(classDeclarationSyntax, attributeData, ref diagnostic),
+            { AttributeClass.Name: "LoadingStepAttribute" } => TryResolveLoadingStepAttribute(classDeclarationSyntax, attributeData),
             { AttributeClass.Name: "FeatureTagAttribute" } => TryResolveFeatureTagAttribute(attributeData),
             { AttributeClass.Name: "RequiresLoadingDependencyAttribute" } => TryResolveDependenciesAttribute(attributeData),
             { AttributeClass.Name: "ExcludedByDefaultAttribute" } => TryResolveExcludedAttribute(),
-            _ => true
+            _ => null
         };
     }
 
-    private bool TryResolveLoadingStepAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData, ref Diagnostic? diagnostic)
+    private Diagnostic? TryResolveLoadingStepAttribute(ClassDeclarationSyntax classDeclarationSyntax, AttributeData attributeData)
     {
         var targetLoadingType = attributeData.ConstructorArguments.FirstOrDefault().Value;
         if (targetLoadingType == null)
         {
-            diagnostic = Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "LoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
-            return false;
+            return Diagnostic.Create(IncorrectAttributeData, classDeclarationSyntax.GetLocation(), "LoadingStepAttribute", classDeclarationSyntax.Identifier.Text);
         }
 
         LoadingType = (LoadingType)targetLoadingType;
-        return true;
+        return null;
     }
 
-    private bool TryResolveFeatureTagAttribute(AttributeData attributeData)
+    private Diagnostic? TryResolveFeatureTagAttribute(AttributeData attributeData)
     {
         FeatureTags = attributeData.ConstructorArguments.FirstOrDefault().Values
             .Where(x => x.Value is not null)
             .Select(x => (string)x.Value!)
             .ToImmutableArray();
-        return true;
+        return null;
     }
 
-    private bool TryResolveDependenciesAttribute(AttributeData attributeData)
+    private Diagnostic? TryResolveDependenciesAttribute(AttributeData attributeData)
     {
         Dependencies = attributeData.ConstructorArguments.FirstOrDefault().Values
             .Where(x => x.Value is not null)
             .Select(x => ((INamedTypeSymbol)x.Value!).Name)
             .ToImmutableArray();
-        return true;
+        return null;
     }
 
-    private bool TryResolveExcludedAttribute()
+    private Diagnostic? TryResolveExcludedAttribute()
     {
         ExcludedByDefault = true;
-        return true;
+        return null;
     }
 
     public bool HasFeatureTag(string featureTag)
@@ -123,6 +144,8 @@ public struct LoadingStepData : IEquatable<LoadingStepData>, IAttributeResolver,
         return @$"LoadingType: {LoadingType}
 {FeatureTags?.Aggregate("\nFeatureTags:", (s, s1) => $"{s}\n    {s1}")}
 {Dependencies?.Aggregate("\nDependencies:", (s, s1) => $"{s}\n    {s1}")}
+IsConstructable: {IsConstructable}
+ExcludedByDefault: {ExcludedByDefault}
 {(AdditionalData.Count <= 0 ? null : AdditionalData.Aggregate("\nAdditional Data:", (s, s1) => $"{s}\n    {s1}"))}";
     }
 }
