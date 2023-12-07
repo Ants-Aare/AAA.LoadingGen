@@ -17,6 +17,9 @@ public class LoadingSequenceGenerator
     public static void GenerateOutput(SourceProductionContext context, LoadingSequenceDataWithDependencies loadingSequenceDataWithDependencies)
     {
         var sequenceData = loadingSequenceDataWithDependencies.LoadingSequenceData;
+        if(string.IsNullOrEmpty(sequenceData.Name))
+            return;
+        
         var stepDatas = loadingSequenceDataWithDependencies.LoadingSteps;
         var stringBuilder = new StringBuilder();
         try
@@ -66,6 +69,34 @@ public class LoadingSequenceGenerator
                             }
                         }
                     }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            stringBuilder.AppendLine(e.ToString());
+        }
+        context.AddSource($"{sequenceData.Name}.Generated.cs", stringBuilder.ToString());
+    }
+    
+    public static void GenerateOutput2(SourceProductionContext context, LoadingSequenceData sequenceData)
+    {
+        if(string.IsNullOrEmpty(sequenceData.Name))
+            return;
+        
+        var stringBuilder = new StringBuilder();
+        try
+        {
+            stringBuilder.AppendGenerationWarning(GeneratorName, sequenceData.TargetNamespace + sequenceData.Name);
+            stringBuilder.Append($"\n/*\n{sequenceData.ToString()}*/\n");
+            stringBuilder.AppendLine(GenerationStringsUtility.Usings);
+            
+            using (new NamespaceBuilder(stringBuilder, sequenceData.TargetNamespace))
+            {
+                stringBuilder.AppendLine($"    public partial class {sequenceData.Name}");
+            
+                using (new BracketsBuilder(stringBuilder, 1))
+                {
                 }
             }
         }

@@ -21,11 +21,13 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
 
         var loadingSteps = context.SyntaxProvider
             .CreateSyntaxProvider(LoadingStepProvider.Filter, CommonTransforms.TransformResolved<LoadingStepData>)
-            .HandleDiagnostics(context);
+            .HandleDiagnostics(context)
+            .Where(x=> !string.IsNullOrEmpty(x.Name));
 
-        // var loadingSequences = context.SyntaxProvider
-        //     .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformResolved<LoadingSequenceData>)
-        //     .HandleDiagnostics(context);
+        var loadingSequences = context.SyntaxProvider
+            .CreateSyntaxProvider(LoadingSequenceProvider.Filter, CommonTransforms.TransformResolved<LoadingSequenceData>)
+            .HandleDiagnostics(context)
+            .Where(x=> !string.IsNullOrEmpty(x.Name));
 
         // var loadingStepsInCompilation =
         //     context.CompilationProvider
@@ -39,5 +41,6 @@ public class LoadingGenSourceGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(loadingSteps, LoadingStepGenerator.GenerateOutput);
         // context.RegisterSourceOutput(loadingSequencesWithDependencies, LoadingSequenceGenerator.GenerateOutput);
+        context.RegisterSourceOutput(loadingSequences, LoadingSequenceGenerator.GenerateOutput2);
     }
 }

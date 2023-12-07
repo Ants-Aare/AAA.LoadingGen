@@ -6,6 +6,7 @@ using System.Threading;
 using AAA.LoadingGen.Generator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using static AAA.SourceGenerators.Common.CommonDiagnostics;
 
 namespace AAA.SourceGenerators.Common;
 
@@ -14,15 +15,18 @@ public static class CommonTransforms
     public static ResultOrDiagnostics<T> TransformResolved<T>(GeneratorSyntaxContext context, CancellationToken cancellationToken)
         where T : new()
     {
+        // return Diagnostic.Create(ExceptionOccured, context.Node.GetLocation(), nameof(TransformResolved), "test", "test");
+                // nameof(TransformResolved), context.Node.ToFullString(), e.ToString());)
         var instance = new T();
         var resultOrDiagnostics = new ResultOrDiagnostics<T>(instance);
         try
         {
+            // throw new Exception("Test");
             var classDeclarationSyntax = (ClassDeclarationSyntax)context.Node;
-
+            
             if (context.SemanticModel.GetDeclaredSymbol(classDeclarationSyntax, cancellationToken) is not INamedTypeSymbol namedTypeSymbol)
                 return Diagnostic.Create(CommonDiagnostics.NamedTypeSymbolNotFound, classDeclarationSyntax.GetLocation(), classDeclarationSyntax.Identifier.Text);
-
+            
             var diagnostics = Resolve(instance, namedTypeSymbol, cancellationToken);
             resultOrDiagnostics.TryAddDiagnostics(diagnostics);
             return resultOrDiagnostics;
@@ -33,7 +37,7 @@ public static class CommonTransforms
                 nameof(TransformResolved), context.Node.ToFullString(), e.ToString());
             resultOrDiagnostics.TryAddDiagnostic(diagnostic);
         }
-
+        
         return resultOrDiagnostics;
     }
 
